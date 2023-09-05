@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container-window">
+      <div class="container-middle container-middle-admin">
+        <div class="container-middle-left">
+          <div id="admin-add-student-toggle" class="admin-toggle" onclick="showStudentForm()">
+            <p>Student toevoegen</p>
+          </div>
+          <div id="admin-add-teacher-toggle" class="admin-toggle" onclick="showTeacherForm()">
+            <p>Docent toevoegen</p>
+          </div>
+          <div id="admin-add-group-toggle" class="admin-toggle" onclick="showGroupForm()">
+            <p>Klas toevoegen</p>
+          </div>
+          <div id="admin-add-students-to-group-toggle" class="admin-toggle" onclick="showStudentForGroupForm()">
+            <p>Studenten aan klas toevoegen</p>
+          </div>
+        </div>
+        
+        <div id="admin-student-form" class="container-middle-right">
+          <div class="admin-title">
+            <h1 class="admin-title">Student toevoegen</h1>
+          </div>
+          <br> <br>
+          <form id="student-form" class="admin-form" method="POST">
+            <label for="admin-student-number" class="admin-input-label">Student nummer
+              <input type="text" name="admin-student-number" class="admin-input-field" required>
+            </label>
+            <label for="admin-student-firstname" class="admin-input-label">Voornaam student
+              <input type="text" name="admin-student-firstname" class="admin-input-field" required>
+            </label>
+            <label for="admin-student-lastname" class="admin-input-label">Achternaam student
+              <input type="text" name="admin-student-lastname" class="admin-input-field" required>
+            </label>
+            <label for="admin-student-email" class="admin-input-label">E-mail student
+              <input type="email" name="admin-student-email" class="admin-input-field" required>
+            </label>
+            <label for="admin-student-group" class="admin-input-label">Klas student
+              <br> <br>
+              <select name="admin-student-group" class="admin-student-group-select">
+                {% for group in group_list %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <div class="admin-button-container">
+              <input class="admin-save-button" type="submit" value="Opslaan" />
+            </div>
+          </form>
+        </div>
+        
+        <div id="admin-teacher-form" class="container-middle-right">
+          <div class="admin-title">
+            <h1 class="admin-title">Docent toevoegen</h1>
+          </div>
+          <form id="teacher-form" class="admin-form" method="POST">
+            <label for="admin-teacher-firstname" class="admin-input-label">Voornaam docent
+              <input type="text" name="admin-teacher-firstname" class="admin-input-field" required>
+            </label>
+            <label for="admin-teacher-lastname" class="admin-input-label">Achternaam docent
+              <input type="text" name="admin-teacher-lastname" class="admin-input-field" required>
+            </label>
+            <label for="admin-teacher-email" class="admin-input-label">E-mail docent
+              <input type="email" name="admin-teacher-email" class="admin-input-field" required>
+            </label>
+            <label for="admin-teacher-admin" class="admin-input-label">Admin? 
+              <br><br>
+              <input type="checkbox" name="admin-teacher-admin-true" class="admin-teacher-checkbox-button"> Ja
+            <div class="admin-button-container">
+              <input class="admin-save-button" type="submit" value="Opslaan" />
+            </div>
+          </form>
+        </div>
+
+        <div id="admin-group-form" class="container-middle-right">
+          <div class="admin-title">
+            <h1 class="admin-title">Klas toevoegen</h1>
+          </div>
+          <form id="group-form" class="admin-form" method="POST">
+            <label for="admin-group-id" class="admin-input-label">Naam klas
+              <input type="text" name="admin-group-id" class="admin-input-field" required>
+            </label>
+            <label for="admin-group-start" class="admin-input-label">Start datum
+              <input type="date" name="admin-group-start" class="admin-input-field" required>
+            </label>
+            <label for="admin-group-end" class="admin-input-label">Eind datum
+              <input type="date" name="admin-group-end" class="admin-input-field" required>
+            </label>
+            <div class="admin-button-container">
+              <input class="admin-save-button" type="submit" value="Opslaan" />
+            </div>
+          </form>
+        </div>
+        
+        <div id="admin-student-for-group-form" class="container-middle-right">
+          <div class="admin-title">
+              <h1 class="admin-title">Student aan klas toevoegen</h1>
+          </div>
+          <br> <br>
+          <form id="student-for-group-form" class="admin-form" method="POST">
+            <label for="admin-students-to-group-students" class="admin-input-label">Students
+                <br> <br>
+                <select id="student-select-box" name="student_ids[]" class="admin-student-group-select select2-container select2-student" multiple>
+                    {% for student in student_list %}
+                    <option value="{{ student.id }}">{{ student.first_name }} {{ student.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label for="admin-student-to-group-group" class="admin-input-label">Klas
+                <br> <br>
+                <select id="group-select-box" name="group_id" class="select2-container select2-group">
+                    {% for group in group_list %}
+                    <option value="{{ group.id }}">{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            
+              <div class="admin-button-container">
+                  <input class="admin-save-button" type="submit" value="Opslaan" />
+              </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript" src="../static/js/admin.js">
+    </script>
+    <script>
+      $(document).ready(function() {
+          $("#student-select-box").select2({
+              closeOnSelect: false
+          });
+          $("#group-select-box").select2();
+      });
+  </script>
+  
+{% endblock %}

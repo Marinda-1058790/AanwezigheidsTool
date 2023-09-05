@@ -1,0 +1,117 @@
+
+{% extends "base.html" %}
+{% block title %}Aanwezigheid{% endblock %}
+
+{% block content %}
+    <div class="top-row">   
+        <!-- When application is opened on the network wide url, then scanning qr-code works  -->
+        <div class="qrcode">
+            <img src="{{ qrcode(url_for('setpresence',code = code, _external=True)) }}">
+        </div>
+        <div>
+            <h2 class="meeting-code-text">Les code:</h2>
+            <p class="meeting-code">{{code}}</p>
+        </div>
+        <div class="timer-container">
+            <h2>Resterende tijd:</h2>
+            <p class="timer-text">1:13</p>
+        </div>
+    </div>
+    <h2 class="info-header">Meld je present met bovenstaande QR-code of meeting code</h2>
+    
+    <!-- Students get added in student-box with ajax  -->
+    <div class="student-box" id="student-box">
+    </div>
+
+    <script type="application/javascript">
+
+        var studentIdArray = []
+        function addStudent(name, id){
+            studentIdArray.push(id);
+            let html_block = $(`                                 
+            <div class="student-box-item">
+                <i class="fa fa-check" style="font-size: 16px;"></i> 
+                <div class="divider"></div>
+                ${name}
+            </div>`);
+            // add meeting to html   
+            let parent = document.getElementById("student-box");
+            let element = $(parent).append(html_block);
+            html_block.css({ opacity: '0', translate: '0 100%', transition: '1s'});
+            
+            html_block.animate({
+                opacity: 1
+            }, function() {
+                html_block.css({ opacity: '1', translate: '0 0'});
+            });
+            
+        }
+        
+        function checkStudents(data){
+            console.log("checking...")
+            for(student of data)
+            if(!studentIdArray.includes(student.id)){
+                addStudent(student.first_name, student.id);
+            }
+        }
+
+        meetingCode = $('.meeting-code').text();    
+        var stopRefresh = false
+
+        function getStudentsForMeeting(meetingCode){
+            $.ajax({ 
+                type: "GET",
+                url: "/api/studentmeeting/"+meetingCode,
+                dataType: "json",  
+                success: function(responseData){
+                    console.log(responseData);
+                    for(item of responseData.result){
+                        studentId = item.student_id
+                        // Find id of students in array of student objects
+                        let student = responseData.students.find(o => o.id === studentId)
+                        console.log(student)
+                        checkStudents(responseData.students)
+                    }
+                },
+                error : function(request,error){
+                    alert("request failed");
+                }
+            })
+            if(!stopRefresh){
+                setTimeout(function(){
+                    getStudentsForMeeting(meetingCode)
+                }, 1000);
+            }
+        }
+        getStudentsForMeeting(meetingCode)
+
+        function updateTimer(meetingCode){
+            $.ajax({ 
+                type: "GET",
+                url: "/timer/update",
+                dataType: "json",  
+                success: function(responseData){
+                    console.log(responseData.result);
+                    if(responseData.result.time == 0){
+                        stopRefresh = true
+                        $('.timer-text').text("Aanmelden beeindigd")
+                    }else{
+                        $('.timer-text').text(responseData.result.timetext)
+                    }
+                },
+                error : function(request,error){
+                    console.log(error);
+                }
+            })
+            if(!stopRefresh){
+                setTimeout(function(){
+                    updateTimer()
+                }, 1000);
+            }
+        }
+        updateTimer()
+
+    </script>
+{% endblock %}
+
+ 

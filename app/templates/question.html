@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+    <div class="container-window-welcome">
+        <div class="container-middle-welcome">
+            <p class="welcome">Fijn dat je er bent! </p>
+            <div class="question">  {{question.text}}</div>
+            <form action="/vraag/{{code}}" method="POST">
+                <textarea name="answer" class="textarea_answer"  rows="4"> </textarea>
+                <input class="save_button" type="submit"  value="Klaar" />
+        </form>
+        </div>
+    </div>
+{% endblock %}

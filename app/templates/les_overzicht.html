@@ -1,0 +1,265 @@
+
+{% extends "base.html" %}
+{% block title %}Les overzicht{% endblock %}
+
+{% block content %}
+    <div class="meeting-detail-container">
+		<div class="teacher-info-container">
+			<div class="teacher-info"> 
+				<h1>{{ meeting.name }}</h1>
+				<h4>Lestijden: </h4>
+				<p>{{ meeting.start_time }} tot {{ meeting.end_time }} </p>
+				<h4>Datum:</h4>
+				<p id="date">{{ meeting.date }}</p>
+				<h4>Docent(en):</h4>
+				<p>
+					{% for teacher in meeting.teachers %}
+						{{ teacher.teacher.full_name }}
+						{% if not loop.last %}
+						,
+						{% endif %}
+					{% else %}
+						<i>Geen docenten toegevoegd</i>
+					{% endfor %}
+				</p>
+
+				<h4>Groep(en):</h4>
+				<p>
+					{% for group_name in groups %}
+						{{ group_name }}
+						{% if not loop.last %}
+						,
+						{% endif %}
+					{% else %}
+						<i>Geen groepsinformatie beschikbaar.</i>
+					{% endfor %}
+				</p>
+				<h4>Status:</h4>
+				<p>
+					{% if meeting.status == 0 %}
+						Nog niet gestart
+					{% elif meeting.status == 1 %}
+						Gestart
+					{% elif meeting.status == 2 %}
+						Afgelopen
+					{% endif %}
+				</p> 
+				<h4>Beschrijving:</h4>
+				<p>
+					{% if meeting.description%}
+						{{ meeting.description }}
+					{% else %}
+						-
+					{% endif %}
+				</p>
+				{% if current_user.role == 0%}
+					<h4>Vraag:</h4>
+					<p>{{ question.text }}</p>
+					<h4>Antwoord(en):</h4>
+					<p>
+						{% for answer in question.answers%}
+							{{answer.text}} <br>
+
+						{% else %}
+							<i>Nog geen antwoorden</i>
+						{% endfor%}
+					</p>
+				{% endif %}
+			</div>
+        </div>
+		{% if current_user.role == 0%}
+		<div class="table-container">
+			<table class="table-style">
+				<thead>
+					<tr>
+						<th onclick="sortTable(0)" ><div class="table-header">Naam<span class="sort-arrow sort-arrow-down"></span></div></th>
+						<th onclick="sortTable(1)" ><div class="table-header">Student nr.<span class="sort-arrow sort-arrow-down"></span></div></th>
+						<th onclick="sortTable(2)" ><div class="table-header">Aanwezigheid<span class="sort-arrow sort-arrow-down"></span></div></th>
+						<th onclick="sortTable(3)" ><div class="table-header">Aanmeldtijd<span class="sort-arrow sort-arrow-down"></span></div></th>
+						<th onclick="sortTable(4)" ><div class="table-header">Reden Afwezigheid<span class="sort-arrow sort-arrow-down"></span></div></th>
+					</tr>
+				</thead>
+				
+				<tbody>
+		
+					{% for student in meeting.students %}
+						<tr>
+							<td>{{ student.student.full_name }}</td>
+							<td>{{ student.student.student_number }}</td>
+							{% if student.present %}
+								<td class="aanwezig">Aanwezig</td>
+								<td>{{ student.checkin_date.strftime('%H:%M') if student.checkin_date else '' }}</td>
+
+							{% else %}
+								{% if student.signed_off  %}
+								    <td class="afwezig">Afgemeld</td>
+									<td>-</td>
+									<td> {{student.reason}} </td>
+								{% else %}
+									<td class="afwezig">Afwezig</td>
+									<td>-</td>
+									<td>-</td>
+								{% endif %}
+							{% endif %}
+						</tr>
+					{% else %}
+						<tr>
+							<td><i>Nog geen informatie</i></td>
+							<td>-</td>
+							<td>-</td>
+							<td>-</td>
+						</tr>
+					{% endfor %}
+
+				</tbody>
+				
+			</table>
+		</div>
+		{% endif %}
+
+    </div>
+	{% if current_user.role == 0%}
+
+	<div class="button-wrapper">
+		<a class="start-btn" href="/meeting/delete/{{ meeting.id }}">Verwijderen</a>
+		<a class="start-btn" href="{{url_for('start_presence', code = meeting.meeting_code)}}" target="_blank">Start</a>
+	</div>
+	{% endif %}
+
+
+	{% if current_user.role == 1%}
+
+	<div id="popup" class="popup" style="display: none">
+        <div class="popup-container">
+            <h1>Reden van afwezigheid</h1>
+            <form id="user" action="/afmelden/" method="POST">
+                <div class="form-row">
+					<input type="hidden" name="meeting_code" value="{{meeting.meeting_code}}">
+                    <textarea class="form-input" type="text" name="absence" id="absence-input"></textarea>
+					<input class="form-submit" type="submit" value="Opslaan" id="absence-submit">
+            </form>
+                </div>
+				</div>
+				</div>
+
+
+	{% endif %}
+				
+
+
+
+	{% if current_user.role == 1 %}
+
+		{% for student in meeting.students %}
+			 {% if student.id == current_user.student[0].id %}
+				{% if student.signed_off  %}
+				signed_off
+				{% else %}
+				not signed_off
+				{% endif %}
+			{% endif %}
+
+		{% endfor %}
+
+
+		<div class="absence-reason">
+			<a id="absence-btn" class="absencebutton small-btn" >Afwezig Melden</a>
+		</div>
+		
+	{% endif %}
+
+				<script type="application/javascript">
+
+					function toggleAbsenceReasonPopup(){
+						$('#popup').toggle();
+					}
+			
+					$('#absence-btn').click(function(){
+						toggleAbsenceReasonPopup()
+					})
+			
+					$('#popup').click(function(e){
+						// check if the click is on the background or the popup 
+						if (e.target == this){
+							toggleAbsenceReasonPopup()
+						}
+					})
+				</script>
+
+	
+
+
+	<script>
+        let date = $('#date').text()
+        let day = dayjs(date).format('dddd, D MMMM YYYY')
+        $('#date').text(day)
+  
+
+		function deleteMeeting(id) {
+		  const confirmed = confirm("Weet je zeker dat je deze bijeenkomst wilt verwijderen?");
+		  if (confirmed) {
+			fetch(`/api/meeting/${id}`, { method: "DELETE" })
+			  .then((response) => response.json())
+			  .then((data) => {
+				if (data.result === "ok") {
+				  window.location.href = "/";
+				} else {
+				  alert(`Error: ${data.error}`);
+				}
+			  })
+			  .catch((error) => console.error(error));
+		  }
+		}
+	</script>
+
+	<script>
+		function sortTable(column) {
+			var table = document.querySelector(".table-style");
+			var rows = Array.from(table.rows).slice(1);
+			var sortOrder = 1;
+			var currentSortArrow;
+		
+			if (event.target.classList.contains("sort-arrow")) {
+				currentSortArrow = event.target;
+			} else {
+				currentSortArrow = event.target.querySelector(".sort-arrow");
+			}
+		
+			if (currentSortArrow.style.borderTopWidth === "5px") {
+				sortOrder = -1;
+				currentSortArrow.style.borderTopWidth = "0";
+				currentSortArrow.style.borderBottomWidth = "5px";
+			} else {
+				currentSortArrow.style.borderTopWidth = "5px";
+				currentSortArrow.style.borderBottomWidth = "0";
+			}
+	
+			rows.sort(function (rowA, rowB) {
+				var cellA = rowA.cells[column].innerText;
+				var cellB = rowB.cells[column].innerText;
+	
+				if (column === 3) { // If the "Tijd" column, convert to Date object
+					cellA = new Date("1970-01-01T" + cellA);
+					cellB = new Date("1970-01-01T" + cellB);
+				} else if (!isNaN(parseFloat(cellA)) && !isNaN(parseFloat(cellB))) {
+					cellA = parseFloat(cellA);
+					cellB = parseFloat(cellB);
+				}
+	
+				if (cellA < cellB) return -1 * sortOrder;
+				if (cellA > cellB) return 1 * sortOrder;
+				return 0;
+			});
+	
+			rows.forEach(function (row) {
+				table.tBodies[0].appendChild(row);
+			});
+		}
+	</script>
+	
+	
+	
+	
+	
+{% endblock %}
+
